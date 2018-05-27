@@ -1,31 +1,23 @@
 package islotwin.tkom;
 
-import islotwin.tkom.gen.GramBaseListener;
 import islotwin.tkom.gen.GramLexer;
 import islotwin.tkom.gen.GramParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Application {
 
     public static void main(String[] args) throws Exception {
 
-        final List<String> identifiers = new ArrayList<String>();
+        final String path = "/Users/iga/Desktop/arrow-down-rounded-light.svg";
 
         String source = "int main() {\n" +
                 "\n" +
@@ -37,20 +29,21 @@ public class Application {
                 " */\n" +
                 "}";
 
+        source = "a";
+
         GramLexer lexer = new GramLexer(new ANTLRInputStream(source));
         GramParser parser = new GramParser(new CommonTokenStream(lexer));
 
-        ParseTreeWalker.DEFAULT.walk(new GramBaseListener(){
+        SVGDocument doc = getSVGDocument();
+        NodeList nodes = doc.getRootElement().getChildNodes();
+        System.out.println(nodes);
 
-            @Override
-            public void enterIfStmt(GramParser.IfStmtContext ctx) {
 
-            }
-            // Perhaps override other rules that use `Identifier`
+        final MetaSVG reader = new MetaSVG();
+        final Element element = reader.getSVGDocument(path).getDocumentElement();
+        final List<Element> childs = reader.getChildrenElements(element);
 
-        }, parser.statement());
-
-        System.out.println("identifiers -> " + identifiers);
+        childs.forEach(c -> System.out.print(c.getAttribute("id") + " " + c.getTagName() + " "));
     }
 
 
@@ -82,7 +75,7 @@ public class Application {
         SAXSVGDocumentFactory df = new SAXSVGDocumentFactory(xmlParser);
         SVGDocument doc = null;
         try {
-            doc = df.createSVGDocument("/Users/iga/Desktop/arrow-up-rounded-light.svg");
+            doc = df.createSVGDocument("/Users/iga/Desktop/arrow-down-rounded-light.svg");
         } catch (IOException e) {
             e.printStackTrace();
         }

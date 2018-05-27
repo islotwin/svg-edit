@@ -7,6 +7,16 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface GramListener extends ParseTreeListener {
 	/**
+	 * Enter a parse tree produced by {@link GramParser#program}.
+	 * @param ctx the parse tree
+	 */
+	void enterProgram(GramParser.ProgramContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GramParser#program}.
+	 * @param ctx the parse tree
+	 */
+	void exitProgram(GramParser.ProgramContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link GramParser#statement}.
 	 * @param ctx the parse tree
 	 */
@@ -26,6 +36,16 @@ public interface GramListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIfStmt(GramParser.IfStmtContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GramParser#elseFun}.
+	 * @param ctx the parse tree
+	 */
+	void enterElseFun(GramParser.ElseFunContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GramParser#elseFun}.
+	 * @param ctx the parse tree
+	 */
+	void exitElseFun(GramParser.ElseFunContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link GramParser#whileStmt}.
 	 * @param ctx the parse tree

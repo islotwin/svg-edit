@@ -15,6 +15,18 @@ public class GramBaseListener implements GramListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterProgram(GramParser.ProgramContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitProgram(GramParser.ProgramContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterStatement(GramParser.StatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -34,6 +46,18 @@ public class GramBaseListener implements GramListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIfStmt(GramParser.IfStmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterElseFun(GramParser.ElseFunContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitElseFun(GramParser.ElseFunContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -1,46 +1,54 @@
 grammar Gram;
+
 // Parser Rules
-statement: ifStmt | initListStmt | initElemStmt | initValStmt | mathStmt | onVarStmt | printStmt | saveDocStmt | whileStmt ;
-ifStmt: IF LNBRACKET expression RNBRACKET LCBRACKET (statement)+ RCBRACKET ( ELSE LCBRACKET (statement)+ RCBRACKET )? ;
-whileStmt: WHILE LNBRACKET expression RNBRACKET LCBRACKET (statement)+ RCBRACKET ;
-mathStmt: VARNAME ASSIGNOP numberArgument MATHOP numberArgument SEMICOLON ;
-saveDocStmt: SAVE LNBRACKET VARNAME COMMA textArgument RNBRACKET SEMICOLON ;
-printStmt: PRINT LNBRACKET textArgument RNBRACKET SEMICOLON ;
+program: (statement)+ ;
+statement: ifStmt | initListStmt | initElemStmt | initValStmt | mathStmt | onVarStmt | printStmt | saveDocStmt | whileStmt;
+ifStmt: IF STARTNBRACKET expression ENDNBRACKET STARTCBRACKET (statement)+ ENDCBRACKET ( elseFun )? ;
+elseFun: ELSE STARTCBRACKET (statement)+ ENDCBRACKET;
+whileStmt: WHILE STARTNBRACKET expression ENDNBRACKET STARTCBRACKET (statement)+ ENDCBRACKET ;
+mathStmt: VARNAME ASSIGNOP ((numberArgument MATHOP numberArgument) | argument) SEMICOLON ;
+saveDocStmt: SAVE STARTNBRACKET VARNAME COMMA textArgument ENDNBRACKET SEMICOLON ;
+printStmt: PRINT STARTNBRACKET textArgument ENDNBRACKET SEMICOLON ;
 initListStmt: LISTVAR VARNAME ASSIGNOP ( initListFun | VARNAME ) ( ( modListFun )+ | ( filterFun )+ )? SEMICOLON ;
-onVarStmt: VARNAME (LSBRACKET numberArgument RSBRACKET)? onVarFun SEMICOLON ;
-onVarFun: ( modListFun )+ | ( filterFun )+ | ( modAttrFun )+ | getAttrFun | sizeFun ;
+onVarStmt: VARNAME (STARTSBRACKET numberArgument ENDSBRACKET)? onVarFun SEMICOLON ;
+onVarFun: ( modListFun )+ | ( filterFun )+ | ( modAttrFun )+ | sizeFun ;
 initListFun: createFun | readFun ;
-createFun: CREATE LNBRACKET ( VARNAME )? RNBRACKET ;
-readFun: READ LNBRACKET textArgument RNBRACKET ;
+createFun: CREATE STARTNBRACKET ( VARNAME )? ENDNBRACKET ;
+readFun: READ STARTNBRACKET textArgument ENDNBRACKET ;
 filterFun: filterAttrFun | filterTagFun ;
-filterAttrFun: EXOP FILTERBYATTR LNBRACKET textArgument COMMA argument RNBRACKET ;
-filterTagFun: EXOP FILTERBYTAG LNBRACKET textArgument RNBRACKET ;
-modListFun: EXOP MODLISTOP LNBRACKET VARNAME RNBRACKET ;
-sizeFun: EXOP SIZE LNBRACKET RNBRACKET ;
+filterAttrFun: EXOP FILTERBYATTR STARTNBRACKET textArgument COMMA argument ENDNBRACKET ;
+filterTagFun: EXOP FILTERBYTAG STARTNBRACKET textArgument ENDNBRACKET ;
+modListFun: EXOP MODLISTOP STARTNBRACKET VARNAME ENDNBRACKET ;
+sizeFun : EXOP SIZE STARTNBRACKET ENDNBRACKET;
 initElemStmt: ELEMVAR VARNAME ASSIGNOP  initElemFun ( setAttrFun )? SEMICOLON ;
 initElemFun: createElemFun | getElemFun ;
-createElemFun: CREATE LNBRACKET textArgument RNBRACKET ;
-getElemFun: VARNAME LSBRACKET numberArgument RSBRACKET ;
+createElemFun: CREATE STARTNBRACKET textArgument ENDNBRACKET ;
+getElemFun: VARNAME STARTSBRACKET numberArgument ENDSBRACKET ;
 modAttrFun: setAttrFun | deleteAttrFun ;
-setAttrFun: EXOP SETATTR LNBRACKET textArgument COMMA argument RNBRACKET ;
-deleteAttrFun: EXOP DELETEATTR LNBRACKET textArgument RNBRACKET ;
-getAttrFun: EXOP GETATTR LNBRACKET textArgument RNBRACKET ;
-initValStmt: VALVAR VARNAME ASSIGNOP ( argument | ( numberArgument MATHOP numberArgument) |  VARNAME sizeFun) SEMICOLON ;
+setAttrFun: EXOP SETATTR STARTNBRACKET textArgument COMMA argument ENDNBRACKET ;
+deleteAttrFun: EXOP DELETEATTR STARTNBRACKET textArgument ENDNBRACKET ;
+initValStmt :
+    ( NUMBERVAR | STRINGVAR) VARNAME ASSIGNOP (
+         argument
+        | ( numberArgument MATHOP numberArgument )
+        | VARNAME sizeFun
+    ) SEMICOLON
+    	;
 expression: numberArgument EXPRESSIONOP numberArgument ( ANDOP numberArgument EXPRESSIONOP numberArgument )* ;
 textArgument: VARNAME | TEXT ;
-numberArgument: VARNAME | NUMBER;
-argument: textArgument | NUMBER;
+numberArgument: VARNAME | NUMBER ;
+argument: VARNAME | TEXT | NUMBER ;
 
 // Lexer Rules
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
-LCBRACKET: '{';
-RCBRACKET: '}';
-LNBRACKET: '(';
-RNBRACKET: ')';
-LSBRACKET: '[';
-RSBRACKET: ']';
+STARTCBRACKET: '{';
+ENDCBRACKET: '}';
+STARTNBRACKET: '(';
+ENDNBRACKET: ')';
+STARTSBRACKET: '[';
+ENDSBRACKET: ']';
 ASSIGNOP: '=';
 EXPRESSIONOP: '<' | '>' | '<=' | '>=' | '==' | '!=';
 MATHOP: '+' | '-' | '*' | '/' ;
@@ -59,9 +67,12 @@ CREATE: 'create';
 SIZE: 'size';
 FILTERBYATTR: 'filterByAttr';
 FILTERBYTAG: 'filterByTag';
-VALVAR: 'val';
+NUMBERVAR: 'num';
+STRINGVAR: 'string';
 LISTVAR: 'list';
-ELEMVAR: 'elem';
+ELEMVAR: 'elem' ;
 NUMBER: ('0'|'-'?[1-9][0-9]*);
 VARNAME: [a-zA-Z]([a-zA-Z]|NUMBER)*;
-TEXT: '"'.+?'"';
+TEXT: '"'.+?'"' ;
+
+WHITESPACE :  (' ' | '\t' | '\r' | '\n') {skip();};

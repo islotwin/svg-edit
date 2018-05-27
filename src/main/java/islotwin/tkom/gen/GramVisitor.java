@@ -10,6 +10,12 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface GramVisitor<T> extends ParseTreeVisitor<T> {
 	/**
+	 * Visit a parse tree produced by {@link GramParser#program}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitProgram(GramParser.ProgramContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GramParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -21,6 +27,12 @@ public interface GramVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfStmt(GramParser.IfStmtContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GramParser#elseFun}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseFun(GramParser.ElseFunContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GramParser#whileStmt}.
 	 * @param ctx the parse tree

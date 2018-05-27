@@ -16,6 +16,13 @@ public class GramBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements G
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitProgram(GramParser.ProgramContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitStatement(GramParser.StatementContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
@@ -24,6 +31,13 @@ public class GramBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements G
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitIfStmt(GramParser.IfStmtContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitElseFun(GramParser.ElseFunContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
