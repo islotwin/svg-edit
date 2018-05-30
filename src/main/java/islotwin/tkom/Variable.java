@@ -4,6 +4,8 @@ import islotwin.tkom.exceptions.InvalidArgumentTypeException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.w3c.dom.Element;
+import org.w3c.dom.svg.SVGDocument;
 
 @AllArgsConstructor
 @Getter
@@ -24,24 +26,21 @@ public class Variable implements Comparable<Variable> {
             throw new InvalidArgumentTypeException("Comparing variables of not the same type. ");
         else if (value.equals(v.getValue()))
             return 0;
-        if (type.equals(TypeEnum.NUM)) {
-            // TODO parse int, double, string
+        else if (type.equals(TypeEnum.NUM)) {
             return Double.compare((Double) value, (Double) v.getValue());
         }
-        if (type.equals(TypeEnum.STRING)) {
-            // TODO parse int, double, string
+        else if (type.equals(TypeEnum.STRING)) {
             return ((String) value).compareTo((String) v.getValue());
         }
-        if (type.equals(TypeEnum.ELEM)) {
-            return 0;
+        else if (type.equals(TypeEnum.ELEM)) {
+            if (this.equals((Element) v.value))
+                return 0;
         }
-        if (type.equals(TypeEnum.LIST)) {
-            return 0;
+        else if (type.equals(TypeEnum.LIST)) {
+            if (this.equals((SVGDocument) v.value))
+                return 0;
         }
-        // TODO check list, elem
-        else {
-            return -1;
-        }
+        return -1;
     }
 
 }

@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MetaSVG {
 
@@ -33,6 +34,25 @@ public class MetaSVG {
         DOMImplementation impl = SVGDOMImplementation.getDOMImplementation();
         Document doc = impl.createDocument(svgNS, "svg", null);
         return (SVGDocument) doc;
+    }
+
+    public void appendChild(final SVGDocument doc, final Element element) {
+        final Element root = doc.getDocumentElement();
+        final String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
+        final Element child = doc.createElementNS(svgNS, element.getTagName());
+
+        for(int i = 0; i < element.getAttributes().getLength(); i++) {
+            final Attr attr = (Attr) element.getAttributes().item(i);
+            child.setAttribute(attr.getName(), attr.getValue());
+        }
+        root.appendChild(child);
+    }
+
+    public Element createElement(final String tag) {
+        final SVGDocument doc = createSVGDocument();
+        final Element root = doc.getDocumentElement();
+        final String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
+        return doc.createElementNS(svgNS, tag);
     }
 
     public void saveSVGDocument(final Variable list, final String path) {
@@ -63,6 +83,45 @@ public class MetaSVG {
         return childs;
     }
 
+    public void setChildrenIds(final Element element) {
+        final NodeList childNodes = element.getChildNodes();
+        for(int i = 0, j = 0; i < childNodes.getLength(); i++) {
+            if(childNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                Element toAdd = (Element) childNodes.item(i);
+                setId(toAdd, j);
+                j++;
+            }
+        }
+    }
+
+    public void setElementsIds(final List<Element> nodes) {
+        for(int i = 0, j = 0; i < nodes.size(); i++) {
+            if(nodes.get(i).getNodeType() == Node.ELEMENT_NODE) {
+                Element toAdd = nodes.get(i);
+                setId(toAdd, j);
+                j++;
+            }
+        }
+    }
+
+    public List<Element> getChildrenByTags(final Element element, final String tag) {
+        final List<Element> childs = getChildrenElements(element);
+        return filterElementsByTags(childs, tag);
+    }
+
+    public List<Element> getChildrenByAttrs(final Element element, final String attr, final String value) {
+        final List<Element> childs = getChildrenElements(element);
+        return filterElementsByAttrs(childs, attr, value);
+    }
+
+    public List<Element> filterElementsByTags(final List<Element> elements, final String tag) {
+        return elements.stream().filter(e -> e.getTagName().equals(tag)).collect(Collectors.toList());
+    }
+
+    public List<Element> filterElementsByAttrs(final List<Element> elements, final String attr, final String value) {
+        return elements.stream().filter(e -> e.hasAttribute(attr) && e.getAttribute(attr).compareToIgnoreCase(value) == 0).collect(Collectors.toList());
+    }
+
     public Element deleteAttribute(final Element element, final String attr) {
         if( element.hasAttribute(attr))
             element.removeAttribute(attr);
@@ -78,8 +137,8 @@ public class MetaSVG {
         parent.removeChild(child);
     }
 
-    public void addChild(final Element parnet, final Element child) {
-        parnet.appendChild(child);
+    public void addChild(final Element parent, final Element child) {
+        parent.appendChild(child);
     }
 
     public Element getElement(final Variable list, final Integer id) {

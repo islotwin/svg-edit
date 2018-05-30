@@ -1,6 +1,6 @@
 import org.junit.Test;
 
-public class TestParser extends TestAbstract {
+public class TestLexer extends TestAbstract {
 
     @Test
     public void shouldFindWhileStmt() {
@@ -22,9 +22,12 @@ public class TestParser extends TestAbstract {
     }
 
     @Test
-    public void shouldFindIfStmt() {
+    public void shouldFindIfElseStmt() {
         final String statement = "if ( i > 1 ) {\n" +
-                "mlist[1].setAttr(\"fill\",color).setAttr(\"opacity\",\"0.1\");}";
+                "mlist[1].setAttr(\"fill\",color).setAttr(\"opacity\",\"0.1\");}" +
+                "else {" +
+                "mlist[0].setAttr(\"fill\",color);" +
+                "}";
 
         final String output = parseStatement(statement);
         shouldEqual(statement, output);

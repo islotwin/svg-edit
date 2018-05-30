@@ -6,25 +6,33 @@ import islotwin.tkom.exceptions.VariableAlreadyExistsException;
 import islotwin.tkom.exceptions.VariableNotFoundException;
 import islotwin.tkom.gen.GramBaseVisitor;
 import islotwin.tkom.gen.GramParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class Visitor extends GramBaseVisitor<Variable> {
     private final List<Variable> memory = new ArrayList<>();
     private final Stack<List<String>> tmpMemory = new Stack<>();
     private final MetaSVG reader = new MetaSVG();
+    private final static Logger logger  = LoggerFactory.getLogger(GramBaseVisitor.class);
 
     @Override
     public Variable visitProgram(GramParser.ProgramContext ctx) {
+        logger.info("Starting program.");
         executeStatements(ctx.statement());
         return null;
     }
 
     @Override
     public Variable visitStatement(GramParser.StatementContext ctx) {
+        logger.info("Visiting statement.");
 
         if(ctx.initValStmt() != null) {
             visitInitValStmt(ctx.initValStmt());
@@ -69,6 +77,7 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitInitValStmt(GramParser.InitValStmtContext ctx) {
+        logger.info("Declaring string or num variable.");
         final Variable toAdd = ctx.NUMBERVAR() != null ?
                 parseVariable(ctx.NUMBERVAR().getSymbol().getText(), ctx.VARNAME(0).getSymbol().getText())
                 : parseVariable(ctx.STRINGVAR().getSymbol().getText(), ctx.VARNAME(0).getSymbol().getText()) ;
@@ -109,6 +118,7 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitInitElemStmt(GramParser.InitElemStmtContext ctx) {
+        logger.info("Declaring elem variable.");
         final Variable toAdd = parseVariable(ctx.ELEMVAR().getSymbol().getText(), ctx.VARNAME().getSymbol().getText());
         if(isUniqueVariable(toAdd.getName())) {
             if(ctx.initElemFun() != null) {
@@ -123,12 +133,22 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitInitListStmt(GramParser.InitListStmtContext ctx) {
+        logger.info("Declaring list variable.");
         final Variable toAdd = parseVariable(ctx.LISTVAR().getSymbol().getText(), ctx.VARNAME(0).getSymbol().getText());
         if(isUniqueVariable(toAdd.getName())) {
             if(ctx.initListFun() != null) {
                 final Variable var = visitInitListFun(ctx.initListFun());
                 toAdd.setValue(var.getValue());
             }
+            if(ctx.filterFun() != null && ctx.filterFun().size() > 0) {
+                final Element parent = ((SVGDocument) toAdd.getValue()).getDocumentElement();
+                toAdd.setValue(executeFilterFun(parent, ctx.filterFun()).getValue());
+            }
+            if(ctx.modListFun() != null && ctx.modListFun().size() > 0) {
+                final SVGDocument parent = (SVGDocument) toAdd.getValue();
+                executeOnListFun(parent, ctx.modListFun());
+            }
+
             memory.add(toAdd);
         }
 
@@ -137,6 +157,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitIfStmt(GramParser.IfStmtContext ctx) {
+        logger.info("Visiting if statement.");
+
         if(((boolean) visitExpression(ctx.expression()).getValue())) {
             executeStatements(ctx.statement());
             if(ctx.elseFun() != null) {
@@ -148,6 +170,7 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitWhileStmt(GramParser.WhileStmtContext ctx) {
+        logger.info("Visiting while statement.");
         while((boolean) visitExpression(ctx.expression()).getValue()) {
             executeStatements(ctx.statement());
         }
@@ -156,6 +179,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitExpression(GramParser.ExpressionContext ctx) {
+        logger.info("Visiting boolean expression.");
+
         final Double first = parseNumber(ctx.numberArgument(0));
         final Double second = parseNumber(ctx.numberArgument(1));
         return new Variable(TypeEnum.VOID, "", executeLogicOperation(first, second, ctx.EXPRESSIONOP(0).getSymbol().getText()));
@@ -164,6 +189,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitMathStmt(GramParser.MathStmtContext ctx) {
+        logger.info("Visiting mathematical statement.");
+
         final Variable var = getVariable(ctx.VARNAME().getSymbol().getText());
         if(ctx.numberArgument(0) != null) {
             if(var.getType() != TypeEnum.NUM)
@@ -184,6 +211,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitSaveDocStmt (GramParser.SaveDocStmtContext ctx) {
+        logger.info("Saving document.");
+
         final Variable var = getVariable(ctx.VARNAME().getSymbol().getText());
         if(var.getType() != TypeEnum.LIST)
             throw new InvalidArgumentTypeException("Type '" + var.getType() + "' not equal to type 'LIST'.");
@@ -194,12 +223,16 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitPrintStmt(GramParser.PrintStmtContext ctx) {
+        logger.info("Printing.");
+
         System.out.println(parseString(ctx.textArgument()));
         return null;
     }
 
     @Override
     public Variable visitOnVarStmt(GramParser.OnVarStmtContext ctx) {
+        logger.info("Visiting function on variable statement.");
+
         final Variable var = getVariable(ctx.VARNAME().getSymbol().getText());
         if(var.getType() == TypeEnum.LIST) {
             if(ctx.numberArgument() != null) {
@@ -208,11 +241,12 @@ public class Visitor extends GramBaseVisitor<Variable> {
                 executeOnElemFun(element, ctx.onVarFun());
             }
             else if(ctx.onVarFun().modListFun() != null) {
-                final Element parent = ((SVGDocument) var.getValue()).getDocumentElement();
-                executeOnListFun(parent, ctx.onVarFun());
+                final SVGDocument parent = (SVGDocument) var.getValue();
+                executeOnListFun(parent, ctx.onVarFun().modListFun());
             }
             else if(ctx.onVarFun().filterFun() != null) {
                 final Element parent = ((SVGDocument) var.getValue()).getDocumentElement();
+                return executeFilterFun(parent, ctx.onVarFun().filterFun());
             }
             return null;
         }
@@ -227,8 +261,11 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitInitElemFun(GramParser.InitElemFunContext ctx) {
+        logger.info("Declaring elem variable (function).");
+
         if(ctx.createElemFun() != null) {
-            return null;
+            final String tag = parseString(ctx.createElemFun().textArgument());
+            return new Variable(TypeEnum.ELEM, "", reader.createElement(tag));
         }
         if(ctx.getElemFun() != null) {
             return visitGetElemFun(ctx.getElemFun());
@@ -238,6 +275,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitGetElemFun(GramParser.GetElemFunContext ctx) {
+        logger.info("Getting elem variable (function).");
+
         final Variable list = getVariable(ctx.VARNAME().getSymbol().getText());
         if(list.getType() != TypeEnum.LIST) {
             throw new InvalidArgumentTypeException("Type '" + list.getType() + "' not equal to 'LIST'");
@@ -250,6 +289,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitInitListFun(GramParser.InitListFunContext ctx) {
+        logger.info("Declaring list variable (function).");
+
         if(ctx.createFun() != null) {
             return visitCreateFun(ctx.createFun());
         }
@@ -261,6 +302,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitCreateFun(GramParser.CreateFunContext ctx) {
+        logger.info("Creating list (function).");
+
         if(ctx.VARNAME() != null) {
             Variable var = getVariable(ctx.VARNAME().getSymbol().getText());
             return new Variable(TypeEnum.LIST, "", var.getValue());
@@ -272,6 +315,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitReadFun(GramParser.ReadFunContext ctx) {
+        logger.info("Reading list from document (function).");
+
         final String path = parseString(ctx.textArgument());
         final SVGDocument doc = reader.getSVGDocument(path);
         // final List<Element> nodes = reader.getChildrenElements(doc.getDocumentElement()); //TODO remove
@@ -280,6 +325,8 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
     @Override
     public Variable visitArgument(GramParser.ArgumentContext ctx) {
+        logger.info("Visiting argument (function).");
+
         Variable var = new Variable(TypeEnum.VOID, "");
         if(ctx.NUMBER() != null) {
             final Double num = Double.valueOf(ctx.NUMBER().getText());
@@ -295,16 +342,17 @@ public class Visitor extends GramBaseVisitor<Variable> {
         return var;
     }
 
-    private void executeOnListFun(final Element element, GramParser.OnVarFunContext ctx) {
+    private void executeOnListFun(final SVGDocument doc, List<GramParser.ModListFunContext> ctx) {
 
-        for(int i = 0; i < ctx.modListFun().size(); i++) {
-            final GramParser.ModListFunContext tmpCtx = ctx.modListFun(i);
+        final Element element = doc.getDocumentElement();
+        for(int i = 0; i < ctx.size(); i++) {
+            final GramParser.ModListFunContext tmpCtx = ctx.get(i);
             final Variable childVar = getVariable(tmpCtx.VARNAME().getSymbol().getText());
             if(childVar.getType() != TypeEnum.ELEM)
                 throw new InvalidArgumentTypeException("Type '" + childVar.getType() + "' not equal to type'ELEM'.");
             final Element child = (Element) childVar.getValue();
             if(tmpCtx.MODLISTOP().getSymbol().getText().equals("add")) {
-                reader.addChild(element, child);
+                reader.appendChild(doc, child);
             }
             else if(tmpCtx.MODLISTOP().getSymbol().getText().equals("remove")) {
                 reader.deleteChild(element, child);
@@ -312,6 +360,29 @@ public class Visitor extends GramBaseVisitor<Variable> {
 
         }
 
+    }
+
+    private Variable executeFilterFun(final Element element, List<GramParser.FilterFunContext> ctx) {
+        List<Element> childs = reader.getChildrenElements(element);
+        for(int i = 0; i < ctx.size(); i++) {
+            final GramParser.FilterFunContext tmpCtx = ctx.get(i);
+            if(tmpCtx.filterAttrFun() != null) {
+                final GramParser.FilterAttrFunContext attrCtx = tmpCtx.filterAttrFun();
+                final String attr = parseString(attrCtx.textArgument());
+                final Variable value = visitArgument(attrCtx.argument());
+                if(value.getType() != TypeEnum.STRING)
+                    throw new InvalidArgumentTypeException("Type '" + value.getType() + "' not equal to type 'STRING'.");
+                childs = reader.filterElementsByAttrs(childs, attr, (String) value.getValue());
+            }
+            else if(tmpCtx.filterTagFun() != null) {
+                final GramParser.FilterTagFunContext tagCtx = tmpCtx.filterTagFun();
+                final String tag = parseString(tagCtx.textArgument());
+                childs = reader.filterElementsByTags(childs, tag);
+            }
+        }
+        final SVGDocument doc = reader.createSVGDocument();
+        childs.forEach(e -> reader.appendChild(doc, e));
+        return new Variable(TypeEnum.LIST, "", doc);
     }
 
     private void executeOnElemFun(final Element element, GramParser.OnVarFunContext ctx) {

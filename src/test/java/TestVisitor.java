@@ -1,19 +1,7 @@
-import islotwin.tkom.Variable;
-import islotwin.tkom.Visitor;
+import islotwin.tkom.exceptions.InvalidArgumentTypeException;
 import islotwin.tkom.exceptions.VariableNotFoundException;
-import islotwin.tkom.gen.GramLexer;
-import islotwin.tkom.gen.GramParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.io.File;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class TestVisitor extends TestAbstract {
 
@@ -21,8 +9,12 @@ public class TestVisitor extends TestAbstract {
     public void shouldEnterWhileStmt() {
         final String statement =
                 "num i = 0;" +
+                "list mlist = create();" +
+                "elem e = create(\"path\");" +
+                "mlist.add(e);" +
+                "string color = \"#123456\";" +
                 "while (i < 2) {" +
-                    "mlist[i].deleteAttr(\"stroke\");" +
+                    "mlist[0].deleteAttr(\"stroke\");" +
                     "i = i + 1;" +
                 "}";
 
@@ -42,9 +34,13 @@ public class TestVisitor extends TestAbstract {
     public void shouldEnterIfStmt() {
         final String statement =
                 "num j = 2;" +
+                "list mlist = create();" +
+                "elem e = create(\"path\");" +
+                        "mlist.add(e);" +
+                        "string color = \"#123456\";" +
                 "if ( j > 1 ) {" +
                     "j = 0;" +
-                    "mlist[1].setAttr(\"fill\",color).setAttr(\"opacity\",\"0.1\");" +
+                    "mlist[0].setAttr(\"fill\",color).setAttr(\"opacity\",\"0.1\");" +
                 "}";
 
         visitProgram(statement);
@@ -63,6 +59,24 @@ public class TestVisitor extends TestAbstract {
                     "n = 5;" +
                 "}";
 
+        visitProgram(statement);
+    }
+
+    @Test(expected = InvalidArgumentTypeException.class)
+    public void shouldNotAddVariables() {
+        final String statement =
+                "num i = 0;" +
+                "string a = \"aa\";" +
+                "i = i + a;";
+        visitProgram(statement);
+    }
+
+    @Test(expected = InvalidArgumentTypeException.class)
+    public void shouldNotAddStrings() {
+        final String statement =
+                "string i = \"x\";" +
+                        "string a = \"aa\";" +
+                        "i = i + a;";
         visitProgram(statement);
     }
 
@@ -102,13 +116,15 @@ public class TestVisitor extends TestAbstract {
     public void shouldDoWhile() {
 
         final String statement =
-                "list mlist = read(\"/Users/iga/Desktop/arrow-down-rounded-light.svg\");" +
+                "list mlist = read(\"/Users/iga/Desktop/arrow-down-rounded-light.svg\").filterByTag(\"polyline\");" +
                         "num s = mlist.size();" +
+                        "mlist[0].setAttr(\"stroke\", \"#123456\");" +
                         "num i = 0; " +
                         "while( i < s) {" +
                             "print(i);" +
                             "i = i + 1;" +
-                        "}";
+                        "}" +
+                        "save(mlist, \"/Users/iga/Desktop/a.svg\");";
         visitProgram(statement);
     }
 

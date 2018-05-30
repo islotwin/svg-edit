@@ -1,10 +1,17 @@
 package islotwin.tkom.exceptions;
 
-import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@AllArgsConstructor
 public class DocumentNotValidException extends RuntimeException {
 
     final public String message;
+
+    final static Logger logger = LoggerFactory.getLogger(DocumentNotValidException.class);
+
+    public DocumentNotValidException(final String message) {
+        this.message = message;
+        logger.error(message);
+    }
 
 }

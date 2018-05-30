@@ -20,6 +20,9 @@ dependencies {
     implementation 'org.apache.xmlgraphics:batik-dom:1.9.1'
     implementation 'org.apache.xmlgraphics:batik-anim:1.9.1'
     implementation 'org.antlr:antlr4-runtime:4.7'
+    testCompile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.6'
+    compile group: 'ch.qos.logback', name:'logback-classic', version: '1.0.9'
+    compile group: 'ch.qos.logback', name:'logback-core', version: '1.0.9'
 
 }
 
