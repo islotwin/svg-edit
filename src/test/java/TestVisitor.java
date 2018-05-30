@@ -118,11 +118,31 @@ public class TestVisitor extends TestAbstract {
         final String statement =
                 "list mlist = read(\"/Users/iga/Desktop/arrow-down-rounded-light.svg\").filterByTag(\"polyline\");" +
                         "num s = mlist.size();" +
-                        "mlist[0].setAttr(\"stroke\", \"#123456\");" +
+                        "mlist[0].setAttr(\"stroke\", \"#123456\").setAttr(\"fill\", \"#000000\");" +
                         "num i = 0; " +
                         "while( i < s) {" +
                             "print(i);" +
                             "i = i + 1;" +
+                        "}" +
+                        "save(mlist, \"/Users/iga/Desktop/a.svg\");";
+        visitProgram(statement);
+    }
+
+
+
+    @Test
+    @Ignore
+    public void shouldDeclareVariable() {
+
+        final String statement =
+                "list mlist = read(\"/Users/iga/Desktop/arrow-down-rounded-light.svg\").filterByTag(\"polyline\");" +
+                        "num s = 3;" +
+                        "mlist[0].setAttr(\"stroke\", \"#123456\").setAttr(\"opacity\", \"0.5\");" +
+                        "num i = 0; " +
+                        "while( i < s ) {" +
+                        "num z = s - 10;" +
+                        "print(z);" +
+                        "i = i + 1;" +
                         "}" +
                         "save(mlist, \"/Users/iga/Desktop/a.svg\");";
         visitProgram(statement);
